@@ -1,0 +1,37 @@
+
+services:
+
+#  wallet-payment-service:
+#    build:
+#      context: ./backend/payment-service
+#    container_name: wallet-payment-service
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      SPRING_APPLICATION_NAME: wallet-payment-service
+#
+#      SPRING_DATASOURCE_URL: ${DB_URL}
+#      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+#      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+#
+#      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+#    depends_on:
+#      - wallet-payment-db
+
+  # Payment Service's DB
+  wallet-payment-db:
+    container_name: transactions-record-database
+    image: postgres
+    environment:
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres:/var/lib/postgres/data
+
+volumes:
+  postgres:
