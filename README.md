@@ -127,4 +127,6 @@ Databases:
 
 <br/>
 
+**Project is in development process.**
+
 *****Note*****: This is not a production FX trading system and does not replace regulated financial services.
