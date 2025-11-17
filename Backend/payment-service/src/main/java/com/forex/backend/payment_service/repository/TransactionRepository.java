@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface TransactionRepository extends JpaRepository<TransactionDetails, String> {
 
     boolean existsByIdempotencyKey (String idempotencyKey);
+    TransactionDetails findByTransactionId (String transactionId);
 }

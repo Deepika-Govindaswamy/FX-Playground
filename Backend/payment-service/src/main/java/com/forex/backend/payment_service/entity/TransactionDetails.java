@@ -27,6 +27,10 @@ public class TransactionDetails {
     @Email
     private String customerEmail;
 
+    private String customerName;
+
+    private String customerAddress;
+
     private String stripePaymentIntentId;
 
     private Long amount;

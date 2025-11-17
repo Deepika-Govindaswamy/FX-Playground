@@ -4,6 +4,7 @@ package com.forex.backend.payment_service.service;
 import com.forex.backend.payment_service.dto.PaymentRequestDTO;
 import com.forex.backend.payment_service.dto.PaymentResponseDTO;
 import com.forex.backend.payment_service.dto.TransactionExecutionDTO;
+import com.forex.backend.payment_service.entity.TransactionDetails;
 import com.forex.backend.payment_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,9 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.PaymentIntentCreateParams;
-import java.util.UUID;
 
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,15 +41,15 @@ public class PaymentExecutionService {
 
         String transactionId = UUID.randomUUID().toString();
 
-        TransactionExecutionDTO dto = TransactionExecutionDTO.builder()
+        TransactionExecutionDTO transactionDto = TransactionExecutionDTO.builder()
                 .transactionId(transactionId)
                 .amount(req.amount())
                 .currency(req.currency())
                 .customerEmail(req.customerEmail())
-                .paymentMethodId(req.paymentMethodId())   // IMPORTANT: must come from frontend
+                .paymentMethodId(req.paymentMethodId())
                 .build();
 
-        PaymentIntent intent = createPaymentIntent(dto);
+        PaymentIntent intent = createPaymentIntent(transactionDto);
 
         PaymentResponseDTO response = PaymentResponseDTO.builder()
                 .transactionId(transactionId)
@@ -55,20 +57,36 @@ public class PaymentExecutionService {
                 .clientSecret(intent.getClientSecret())
                 .build();
 
-        log.info("Payment Intent: " + intent.toString());
-        log.info("Payment response: " + response.toString());
+        log.info("Payment Intent: {}", intent.getLastPaymentError());
+
+        // Save transaction details into database
+        TransactionDetails transactionDetails = TransactionDetails.builder()
+                .transactionId(transactionId)
+                .amount(req.amount()/100)
+                .currency(req.currency())
+                .customerEmail(req.customerEmail())
+                .customerName(req.customerName())
+                .customerAddress(req.customerAddress())
+                .paymentMethodId(req.paymentMethodId())
+                .stripePaymentIntentId(intent.getId())
+                .paymentMethodId(req.paymentMethodId())
+                .idempotencyKey(req.idempotencyKey())
+                .status(intent.getStatus())
+                .createdAt(Instant.now())
+                .build();
+
+        transactionRepository.save(transactionDetails);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     /**
-     * Create PaymentIntent — DO NOT CONFIRM HERE.
-     * Confirmation must happen on the frontend with Stripe.js
+     * Create PaymentIntent
      */
     private PaymentIntent createPaymentIntent(TransactionExecutionDTO paymentDetails) {
 
         try {
-            // (1) Create or reuse a Customer
+            // Create a Customer
             Customer customer = Customer.create(
                     CustomerCreateParams.builder()
                             .setEmail(paymentDetails.customerEmail())
@@ -77,7 +95,7 @@ public class PaymentExecutionService {
 
             log.info("Customer created: {}", customer.getId());
 
-            // (2) Create PaymentIntent (no manual payment method attachment)
+            // Create PaymentIntent
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(paymentDetails.amount())
                     .setCurrency(paymentDetails.currency())
@@ -89,7 +107,7 @@ public class PaymentExecutionService {
                     )
                     .build();
 
-            // (3) Create PaymentIntent on Stripe (this sends API request)
+            // Create PaymentIntent on Stripe
             PaymentIntent intent = PaymentIntent.create(
                     params,
                     RequestOptions.builder()

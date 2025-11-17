@@ -2,8 +2,11 @@ package com.forex.backend.payment_service.controller;
 
 import com.forex.backend.payment_service.dto.PaymentRequestDTO;
 import com.forex.backend.payment_service.dto.PaymentResponseDTO;
+import com.forex.backend.payment_service.entity.TransactionDetails;
+import com.forex.backend.payment_service.repository.TransactionRepository;
 import com.forex.backend.payment_service.service.PaymentExecutionService;
 import com.forex.backend.payment_service.service.RequestValidationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/payment-service")
+@Slf4j
 public class PaymentController {
 
     @Autowired
@@ -21,6 +25,9 @@ public class PaymentController {
 
     @Autowired
     private RequestValidationService requestValidationService;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @PostMapping("/initiate-payment")
     public ResponseEntity<PaymentResponseDTO> initiatePayment (@RequestBody PaymentRequestDTO paymentRequestDto) {
@@ -35,4 +42,14 @@ public class PaymentController {
         return paymentService.initiateTransaction(paymentRequestDto);
 
     }
+
+    @PostMapping("/update-status")
+    public ResponseEntity<Void> updateStatus(@RequestBody PaymentResponseDTO dto) {
+        TransactionDetails txDetails = transactionRepository.findByTransactionId(dto.transactionId());
+        txDetails.setStatus(dto.paymentStatus());
+        transactionRepository.save(txDetails);
+        log.info("Transaction with id {} updated successfully", dto.paymentStatus());
+        return ResponseEntity.ok().build();
+    }
+
 }

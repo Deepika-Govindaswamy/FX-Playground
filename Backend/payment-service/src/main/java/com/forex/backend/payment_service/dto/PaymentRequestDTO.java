@@ -4,4 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record PaymentRequestDTO (Long amount, String currency, String paymentMethodId,
-                                 String idempotencyKey, String customerEmail) {}
+                                 String idempotencyKey, String customerEmail, String customerName, String customerAddress) {}
