@@ -23,9 +23,9 @@ services:
     container_name: transactions-record-database
     image: postgres
     environment:
-      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB_PAYMENT_SERVICE}
 
     ports:
       - "5433:5432"
@@ -33,5 +33,22 @@ services:
     volumes:
       - postgres:/var/lib/postgres/data
 
+
+# Wallet Service's DB
+  wallet-management-db:
+    container_name: wallet-management-database
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_WALLET_SERVICE}
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - wallet_service:/var/lib/postgres/wallets/data
+
 volumes:
   postgres:
+  wallet_service:

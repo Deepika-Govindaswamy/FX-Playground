@@ -2,7 +2,7 @@
 package com.forex.backend.payment_service.service;
 
 import com.forex.backend.payment_service.dto.PaymentRequestDTO;
-import com.forex.backend.payment_service.dto.PaymentResponseDTO;
+import com.forex.backend.payment_service.dto.PaymentVerficationResponseDTO;
 import com.forex.backend.payment_service.dto.TransactionExecutionDTO;
 import com.forex.backend.payment_service.entity.TransactionDetails;
 import com.forex.backend.payment_service.repository.TransactionRepository;
@@ -35,7 +35,7 @@ public class PaymentExecutionService {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    public ResponseEntity<PaymentResponseDTO> initiateTransaction(PaymentRequestDTO req) {
+    public ResponseEntity<PaymentVerficationResponseDTO> initiateTransaction(PaymentRequestDTO req) {
 
         Stripe.apiKey = stripeApiKey;
 
@@ -45,13 +45,12 @@ public class PaymentExecutionService {
                 .transactionId(transactionId)
                 .amount(req.amount())
                 .currency(req.currency())
-                .customerEmail(req.customerEmail())
                 .paymentMethodId(req.paymentMethodId())
                 .build();
 
         PaymentIntent intent = createPaymentIntent(transactionDto);
 
-        PaymentResponseDTO response = PaymentResponseDTO.builder()
+        PaymentVerficationResponseDTO response = PaymentVerficationResponseDTO.builder()
                 .transactionId(transactionId)
                 .paymentStatus(intent.getStatus())
                 .clientSecret(intent.getClientSecret())
@@ -64,9 +63,6 @@ public class PaymentExecutionService {
                 .transactionId(transactionId)
                 .amount(req.amount()/100)
                 .currency(req.currency())
-                .customerEmail(req.customerEmail())
-                .customerName(req.customerName())
-                .customerAddress(req.customerAddress())
                 .paymentMethodId(req.paymentMethodId())
                 .stripePaymentIntentId(intent.getId())
                 .paymentMethodId(req.paymentMethodId())
@@ -95,9 +91,11 @@ public class PaymentExecutionService {
 
             log.info("Customer created: {}", customer.getId());
 
+            Long amountInLowest = paymentDetails.amount();
+
             // Create PaymentIntent
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount(paymentDetails.amount())
+                    .setAmount(amountInLowest)
                     .setCurrency(paymentDetails.currency())
                     .setCustomer(customer.getId())
                     .setAutomaticPaymentMethods(

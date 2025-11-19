@@ -33,7 +33,7 @@ public class TransactionDetails {
 
     private String stripePaymentIntentId;
 
-    private Long amount;
+    private Double amount;
 
     private String currency;
 

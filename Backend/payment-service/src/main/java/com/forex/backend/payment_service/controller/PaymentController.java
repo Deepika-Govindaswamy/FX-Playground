@@ -2,6 +2,7 @@ package com.forex.backend.payment_service.controller;
 
 import com.forex.backend.payment_service.dto.PaymentRequestDTO;
 import com.forex.backend.payment_service.dto.PaymentResponseDTO;
+import com.forex.backend.payment_service.dto.PaymentVerficationResponseDTO;
 import com.forex.backend.payment_service.entity.TransactionDetails;
 import com.forex.backend.payment_service.repository.TransactionRepository;
 import com.forex.backend.payment_service.service.PaymentExecutionService;
@@ -30,12 +31,12 @@ public class PaymentController {
     private TransactionRepository transactionRepository;
 
     @PostMapping("/initiate-payment")
-    public ResponseEntity<PaymentResponseDTO> initiatePayment (@RequestBody PaymentRequestDTO paymentRequestDto) {
+    public ResponseEntity<PaymentVerficationResponseDTO> initiatePayment (@RequestBody PaymentRequestDTO paymentRequestDto) {
 
         String validationResponse = requestValidationService.validateRequest(paymentRequestDto);
 
         if (!validationResponse.equals("Valid")) {
-            var responseBody = new PaymentResponseDTO(null, "Invalid Request: " + validationResponse, null);
+            var responseBody = new PaymentVerficationResponseDTO(null, "Invalid Request: " + validationResponse, null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
         }
 
@@ -44,12 +45,19 @@ public class PaymentController {
     }
 
     @PostMapping("/update-status")
-    public ResponseEntity<Void> updateStatus(@RequestBody PaymentResponseDTO dto) {
-        TransactionDetails txDetails = transactionRepository.findByTransactionId(dto.transactionId());
-        txDetails.setStatus(dto.paymentStatus());
-        transactionRepository.save(txDetails);
-        log.info("Transaction with id {} updated successfully", dto.paymentStatus());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PaymentResponseDTO> updateStatus(@RequestBody PaymentVerficationResponseDTO dto) {
+        TransactionDetails txnVerification = transactionRepository.findByTransactionId(dto.transactionId());
+        txnVerification.setStatus(dto.paymentStatus());
+        transactionRepository.save(txnVerification);
+
+        PaymentResponseDTO transactionResponse = PaymentResponseDTO.builder()
+                .transactionId(dto.transactionId())
+                .paymentStatus(dto.paymentStatus())
+                .build();
+
+        log.info("Transaction status: ", transactionResponse.paymentStatus());
+
+        return ResponseEntity.ok().body(transactionResponse);
     }
 
 }

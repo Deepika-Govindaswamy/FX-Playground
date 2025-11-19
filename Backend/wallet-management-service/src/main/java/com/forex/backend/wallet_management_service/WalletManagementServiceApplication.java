@@ -1,4 +1,4 @@
-package com.forex.backend.payment_service;
+package com.forex.backend.wallet_management_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,10 +6,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableFeignClients
-public class PaymentServiceApplication {
+public class WalletManagementServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PaymentServiceApplication.class, args);
+		SpringApplication.run(WalletManagementServiceApplication.class, args);
 	}
 
 }
