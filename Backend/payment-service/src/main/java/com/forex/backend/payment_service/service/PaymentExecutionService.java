@@ -1,7 +1,7 @@
 
 package com.forex.backend.payment_service.service;
 
-import com.forex.backend.payment_service.dto.PaymentRequestDTO;
+import com.forex.backend.payment_service.dto.TransactionInitiateDTO;
 import com.forex.backend.payment_service.dto.PaymentVerficationResponseDTO;
 import com.forex.backend.payment_service.dto.TransactionExecutionDTO;
 import com.forex.backend.payment_service.entity.TransactionDetails;
@@ -35,7 +35,12 @@ public class PaymentExecutionService {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    public ResponseEntity<PaymentVerficationResponseDTO> initiateTransaction(PaymentRequestDTO req) {
+    /**
+     *
+     * @param req - type TransactionInitiateDTO
+     * @return ResponseEntity<PaymentVerficationResponseDTO>
+     */
+    public ResponseEntity<PaymentVerficationResponseDTO> initiateTransaction(TransactionInitiateDTO req) {
 
         Stripe.apiKey = stripeApiKey;
 
@@ -51,6 +56,11 @@ public class PaymentExecutionService {
         PaymentIntent intent = createPaymentIntent(transactionDto);
 
         PaymentVerficationResponseDTO response = PaymentVerficationResponseDTO.builder()
+                .userId(req.userId())
+                .walletId(req.walletId())
+                .amount(req.amount())
+                .currency(req.currency())
+                .paymentMethodId(req.paymentMethodId())
                 .transactionId(transactionId)
                 .paymentStatus(intent.getStatus())
                 .clientSecret(intent.getClientSecret())
@@ -61,14 +71,15 @@ public class PaymentExecutionService {
         // Save transaction details into database
         TransactionDetails transactionDetails = TransactionDetails.builder()
                 .transactionId(transactionId)
-                .amount(req.amount()/100)
-                .currency(req.currency())
-                .paymentMethodId(req.paymentMethodId())
                 .stripePaymentIntentId(intent.getId())
+                .amount(req.amount()/100.0)
+                .currency(req.currency())
                 .paymentMethodId(req.paymentMethodId())
                 .idempotencyKey(req.idempotencyKey())
                 .status(intent.getStatus())
                 .createdAt(Instant.now())
+                .userId(req.userId())
+                .walletId(req.walletId())
                 .build();
 
         transactionRepository.save(transactionDetails);
@@ -91,11 +102,9 @@ public class PaymentExecutionService {
 
             log.info("Customer created: {}", customer.getId());
 
-            Long amountInLowest = paymentDetails.amount();
-
             // Create PaymentIntent
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount(amountInLowest)
+                    .setAmount(paymentDetails.amount())
                     .setCurrency(paymentDetails.currency())
                     .setCustomer(customer.getId())
                     .setAutomaticPaymentMethods(

@@ -1,6 +1,6 @@
 package com.forex.backend.payment_service.service;
 
-import com.forex.backend.payment_service.dto.PaymentRequestDTO;
+import com.forex.backend.payment_service.dto.TransactionInitiateDTO;
 import com.forex.backend.payment_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +13,11 @@ public class RequestValidationService {
     @Autowired
     private final TransactionRepository transactionRepository;
 
-    public String validateRequest (PaymentRequestDTO paymentRequestDto) {
+    public String validateRequest (TransactionInitiateDTO transactionInitiateDto) {
 
-        Long amount = paymentRequestDto.amount();
-        String idempotencyKey = paymentRequestDto.idempotencyKey();
-        String paymentMethodId = paymentRequestDto.paymentMethodId();
+        Long amount = transactionInitiateDto.amount();
+        String idempotencyKey = transactionInitiateDto.idempotencyKey();
+        String paymentMethodId = transactionInitiateDto.paymentMethodId();
 
         if (amount == null || amount <= 0 || amount > 99999999){
             return "Enter a valid amount";

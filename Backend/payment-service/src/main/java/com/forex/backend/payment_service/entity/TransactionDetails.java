@@ -23,14 +23,6 @@ public class TransactionDetails {
     @Id
     private String transactionId;
 
-    @NotBlank
-    @Email
-    private String customerEmail;
-
-    private String customerName;
-
-    private String customerAddress;
-
     private String stripePaymentIntentId;
 
     private Double amount;
@@ -43,9 +35,9 @@ public class TransactionDetails {
 
     private String status;
 
-    private String failureReason;
-
-    private Instant updatedAt;
-
     private Instant createdAt;
+
+    private Integer userId;
+
+    private Integer walletId;
 }

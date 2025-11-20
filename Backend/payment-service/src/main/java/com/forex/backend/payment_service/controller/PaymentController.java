@@ -1,6 +1,6 @@
 package com.forex.backend.payment_service.controller;
 
-import com.forex.backend.payment_service.dto.PaymentRequestDTO;
+import com.forex.backend.payment_service.dto.TransactionInitiateDTO;
 import com.forex.backend.payment_service.dto.PaymentResponseDTO;
 import com.forex.backend.payment_service.dto.PaymentVerficationResponseDTO;
 import com.forex.backend.payment_service.entity.TransactionDetails;
@@ -31,26 +31,33 @@ public class PaymentController {
     private TransactionRepository transactionRepository;
 
     @PostMapping("/initiate-payment")
-    public ResponseEntity<PaymentVerficationResponseDTO> initiatePayment (@RequestBody PaymentRequestDTO paymentRequestDto) {
+    public ResponseEntity<PaymentVerficationResponseDTO> initiatePayment (@RequestBody TransactionInitiateDTO transactionInitiateDto) {
 
-        String validationResponse = requestValidationService.validateRequest(paymentRequestDto);
+        String validationResponse = requestValidationService.validateRequest(transactionInitiateDto);
 
         if (!validationResponse.equals("Valid")) {
-            var responseBody = new PaymentVerficationResponseDTO(null, "Invalid Request: " + validationResponse, null);
+            var responseBody = new PaymentVerficationResponseDTO(transactionInitiateDto.userId(), transactionInitiateDto.walletId(),
+                    null, null, "Cannot Generate Payment Method Id",
+                    null, validationResponse, null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
         }
 
-        return paymentService.initiateTransaction(paymentRequestDto);
+        return paymentService.initiateTransaction(transactionInitiateDto);
 
     }
 
     @PostMapping("/update-status")
     public ResponseEntity<PaymentResponseDTO> updateStatus(@RequestBody PaymentVerficationResponseDTO dto) {
+
         TransactionDetails txnVerification = transactionRepository.findByTransactionId(dto.transactionId());
         txnVerification.setStatus(dto.paymentStatus());
         transactionRepository.save(txnVerification);
 
         PaymentResponseDTO transactionResponse = PaymentResponseDTO.builder()
+                .amount(dto.amount())
+                .currency(dto.currency())
+                .userId(dto.userId())
+                .walletId(dto.walletId())
                 .transactionId(dto.transactionId())
                 .paymentStatus(dto.paymentStatus())
                 .build();
